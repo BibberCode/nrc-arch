@@ -123,23 +123,28 @@ jobs:
           git add no-risk-launcher/PKGBUILD no-risk-launcher/.SRCINFO
           git diff --cached --quiet || git commit -m "chore: ${{ needs.check.outputs.tag }} -> ${{ needs.check.outputs.pkgver }}"
           git push origin main
-      - name: pacman-Repo bauen (repo-add) + gh-pages
+      - name: pacman-Repo bauen (repo-add) + gh-pages (frischer Clone)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           pacman -Syu --noconfirm --needed git
+          git config --global --add safe.directory '*'
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p /tmp/pacrepo/x86_64
           cp /tmp/repo-pkgs/*.pkg.tar.zst /tmp/pacrepo/x86_64/
           cd /tmp/pacrepo/x86_64
           repo-add norisk.db.tar.zst *.pkg.tar.zst
-          # gh-pages Branch aktualisieren (ohne History umzuschreiben geht auch anders,
-          # für kleines Projekt: checkout + copy + push)
-          cd "$GITHUB_WORKSPACE"
-          git fetch origin gh-pages:gh-pages || true
-          git worktree add /tmp/ghpages gh-pages 2>/dev/null || (git checkout -b gh-pages && git worktree add /tmp/ghpages gh-pages)
-          mkdir -p /tmp/ghpages/x86_64
-          cp /tmp/pacrepo/x86_64/* /tmp/ghpages/x86_64/
+          rm -rf /tmp/ghpages
+          git clone --depth 1 --branch gh-pages "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}.git" /tmp/ghpages 2>/dev/null \
+            || git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}.git" /tmp/ghpages
           cd /tmp/ghpages
+          git checkout -B gh-pages
+          mkdir -p x86_64
+          cp /tmp/pacrepo/x86_64/* x86_64/
           git add x86_64
-          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "repo: ${{ needs.check.outputs.tag }}" || true
+          git commit -m "repo: ${{ needs.check.outputs.tag }}" || true
           git push origin gh-pages
       - name: GitHub-Release mit .pkg.tar.zst (reine API, kein gh/git nötig)
         env:
