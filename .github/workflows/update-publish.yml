@@ -48,7 +48,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/check-upstream.py --apply --token "$GITHUB_TOKEN"
       - name: Build-Deps
-        run: pacman -Syu --noconfirm --needed namcap desktop-file-utils sudo
+        run: pacman -Syu --noconfirm --needed namcap desktop-file-utils sudo git
       - name: builder-User anlegen (makepkg verbietet Root)
         run: |
           id builder >/dev/null 2>&1 || useradd -m builder
