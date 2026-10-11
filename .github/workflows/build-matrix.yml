@@ -93,6 +93,7 @@ jobs:
           name: pkg-${{ matrix.version.pkgver }}
           path: .matrix-out/*.pkg.tar.zst
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 14
 
   publish:
