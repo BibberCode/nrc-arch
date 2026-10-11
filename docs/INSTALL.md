@@ -1,9 +1,26 @@
 # NoRisk Client für Arch / CachyOS – Installieren in 2 Minuten
 
 Kein Flatpak, kein manuelles `.deb`-Entpacken, kein PC zum Bauen nötig.
-Updates kommen per `pacman -Syu`.
 
-## Variante A (empfohlen): eigenes pacman-Repo
+## Variante 0 (einfachste): Datei aus Releases + ein Skript
+
+1. Auf der GitHub-Releases-Seite laden:
+   - `install.sh`
+   - `no-risk-launcher-*.pkg.tar.zst` (optional – wird sonst automatisch geladen)
+2. In den Download-Ordner wechseln, ausführen:
+
+```bash
+bash install.sh
+```
+
+Das Skript nimmt das Paket aus dem gleichen Ordner oder lädt es selbst,
+dann `sudo pacman -U`. Mit Repo für `pacman -Syu`-Updates:
+
+```bash
+bash install.sh --with-repo
+```
+
+## Variante A: eigenes pacman-Repo
 
 Einmalig:
 

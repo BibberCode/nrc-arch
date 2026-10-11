@@ -3,8 +3,9 @@
 Natives `pacman`-Paket aus dem offiziellen Upstream-`.deb`
 (`NoRiskClient/noriskclient-launcher`), ohne Flatpak, ohne eigenen Build-PC.
 
-* Installieren: `install-repo.sh` oder `docs/INSTALL.md`
-* Updates: automatisch via `sudo pacman -Syu`
+* Installieren: aus Releases `install.sh` + Paket laden, dann `bash install.sh`
+  (Details: `docs/INSTALL.md`; Repo-Setup: `install-repo.sh` / `--with-repo`)
+* Updates: per `sudo pacman -Syu` (mit Repo) oder Skript erneut aus Releases
 * Automation: `.github/workflows/update-publish.yml` (alle 6h, inkl. Betas),
   `build.yml` prüft jeden PR. Roter Build → kein Release, kein Repo-Update.
 * Paketquelle: `no-risk-launcher/PKGBUILD` (SHA256 statt `SKIP`,

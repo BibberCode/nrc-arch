@@ -146,5 +146,8 @@ jobs:
           body: |
             Upstream: ${{ needs.check.outputs.tag }}
             SHA256 (.deb): ${{ needs.check.outputs.sha256 }}
-            Install: siehe README / docs/INSTALL.md
-          files: /tmp/repo-pkgs/*.pkg.tar.zst
+            Install: `install.sh` aus diesem Release laden, dann `bash install.sh`.
+            Siehe README / docs/INSTALL.md
+          files: |
+            /tmp/repo-pkgs/*.pkg.tar.zst
+            install.sh
