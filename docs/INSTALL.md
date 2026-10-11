@@ -45,7 +45,7 @@ sudo pacman -Syu
 Falls du kein Custom-Repo willst:
 
 ```bash
-curl -LO https://github.com/<GITHUB_USER>/<REPO>/releases/latest/download/no-risk-launcher-*.pkg.tar.zst
+curl -LO https://github.com/BibberCode/nrc-arch/releases/latest/download/no-risk-launcher-*.pkg.tar.zst
 sudo pacman -U no-risk-launcher-*.pkg.tar.zst
 ```
 

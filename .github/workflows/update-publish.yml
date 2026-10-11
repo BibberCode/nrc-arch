@@ -23,7 +23,7 @@ jobs:
       sha256: ${{ steps.check.outputs.sha256 }}
       tag: ${{ steps.check.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - id: check
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -42,7 +42,7 @@ jobs:
     container:
       image: archlinux:base-devel
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: PKGBUILD aktualisieren
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -77,13 +77,13 @@ jobs:
           new=$(grep -E '^pkgver=' PKGBUILD | cut -d= -f2)
           vercmp "$new" "$old" | grep -qv '^-1$' || (echo "vercmp: $new < $old, Abbruch" && exit 1)
           rm -rf "$tmp"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: pkg
           path: no-risk-launcher/*.pkg.tar.zst
           if-no-files-found: error
           retention-days: 7
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: pkgbuild
           path: |
@@ -100,14 +100,14 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: pkg
           path: /tmp/repo-pkgs
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: pkgbuild
           path: /tmp/repo-pkgbuild
@@ -138,16 +138,15 @@ jobs:
           git add x86_64
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "repo: ${{ needs.check.outputs.tag }}" || true
           git push origin gh-pages
-      - name: GitHub-Release mit .pkg.tar.zst
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: arch-v${{ needs.check.outputs.pkgver }}-1
-          name: no-risk-launcher ${{ needs.check.outputs.pkgver }} (upstream ${{ needs.check.outputs.tag }})
-          body: |
-            Upstream: ${{ needs.check.outputs.tag }}
-            SHA256 (.deb): ${{ needs.check.outputs.sha256 }}
-            Install: `install.sh` aus diesem Release laden, dann `bash install.sh`.
-            Siehe README / docs/INSTALL.md
-          files: |
-            /tmp/repo-pkgs/*.pkg.tar.zst
-            install.sh
+      - name: GitHub-Release mit .pkg.tar.zst (ohne Node-Action, via gh-CLI)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pacman -Syu --noconfirm --needed github-cli
+          gh release create "arch-v${{ needs.check.outputs.pkgver }}-1" \
+            --title "no-risk-launcher ${{ needs.check.outputs.pkgver }} (upstream ${{ needs.check.outputs.tag }})" \
+            --notes "Upstream: ${{ needs.check.outputs.tag }}
+          SHA256 (.deb): ${{ needs.check.outputs.sha256 }}
+          Install: install.sh aus diesem Release laden, dann bash install.sh.
+          Siehe README / docs/INSTALL.md" \
+            /tmp/repo-pkgs/*.pkg.tar.zst install.sh
