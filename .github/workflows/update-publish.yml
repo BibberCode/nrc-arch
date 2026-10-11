@@ -48,16 +48,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/check-upstream.py --apply --token "$GITHUB_TOKEN"
       - name: Build-Deps
-        run: pacman -Syu --noconfirm --needed namcap desktop-file-utils
+        run: pacman -Syu --noconfirm --needed namcap desktop-file-utils sudo
+      - name: builder-User anlegen (makepkg verbietet Root)
+        run: |
+          id builder >/dev/null 2>&1 || useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: .SRCINFO neu erzeugen
         run: |
-          cd no-risk-launcher
-          makepkg --printsrcinfo > .SRCINFO
-          cat .SRCINFO
+          su builder -c "cd '$GITHUB_WORKSPACE/no-risk-launcher' && makepkg --printsrcinfo > .SRCINFO"
+          cat no-risk-launcher/.SRCINFO
       - name: Bauen als builder (makepkg nie als Root)
         run: |
-          useradd -m builder
-          chown -R builder:builder "$GITHUB_WORKSPACE"
           su builder -c "cd '$GITHUB_WORKSPACE/no-risk-launcher' && makepkg -s --noconfirm --noprogressbar"
       - name: Tests (namcap, Desktop, WMClass, vercmp)
         run: |
