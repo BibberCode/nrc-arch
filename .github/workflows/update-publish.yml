@@ -141,17 +141,16 @@ jobs:
           git add x86_64
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "repo: ${{ needs.check.outputs.tag }}" || true
           git push origin gh-pages
-      - name: GitHub-Release mit .pkg.tar.zst (ohne Node-Action, via gh-CLI)
+      - name: GitHub-Release mit .pkg.tar.zst (reine API, kein gh/git nötig)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pacman -Syu --noconfirm --needed git github-cli
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          gh release create "arch-v${{ needs.check.outputs.pkgver }}-1" \
-            -R "${{ github.repository }}" \
+          cd "$GITHUB_WORKSPACE"
+          python3 scripts/publish-release.py --repo "${{ github.repository }}" \
+            --tag "arch-v${{ needs.check.outputs.pkgver }}-1" \
             --title "no-risk-launcher ${{ needs.check.outputs.pkgver }} (upstream ${{ needs.check.outputs.tag }})" \
             --notes "Upstream: ${{ needs.check.outputs.tag }}
           SHA256 (.deb): ${{ needs.check.outputs.sha256 }}
           Install: install.sh aus diesem Release laden, dann bash install.sh.
           Siehe README / docs/INSTALL.md" \
-            /tmp/repo-pkgs/*.pkg.tar.zst install.sh
+            --assets /tmp/repo-pkgs/*.pkg.tar.zst install.sh
