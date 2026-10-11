@@ -145,7 +145,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pacman -Syu --noconfirm --needed github-cli
+          pacman -Syu --noconfirm --needed git github-cli
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           gh release create "arch-v${{ needs.check.outputs.pkgver }}-1" \
             --title "no-risk-launcher ${{ needs.check.outputs.pkgver }} (upstream ${{ needs.check.outputs.tag }})" \
             --notes "Upstream: ${{ needs.check.outputs.tag }}
