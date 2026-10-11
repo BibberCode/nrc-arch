@@ -8,5 +8,7 @@ src/
 *.sig
 no-risk-launcher/*.deb
 no-risk-launcher/*.pkg.tar.zst
+.matrix-build/
+.matrix-out/
 
 __pycache__/

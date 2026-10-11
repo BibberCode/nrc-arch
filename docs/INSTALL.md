@@ -14,11 +14,27 @@ bash install.sh
 ```
 
 Das Skript nimmt das Paket aus dem gleichen Ordner oder lädt es selbst,
-dann `sudo pacman -U`. Mit Repo für `pacman -Syu`-Updates:
+dann `sudo pacman -U`. Der Kanal kommt aus dem Launcher
+(`~/.local/share/noriskclientv3/launcher_config.json`, `check_beta_channel`):
+Beta an → Beta-Releases, aus → nur finale Releases.
+Manuell übersteuern mit `bash install.sh --channel=stable|beta`.
+Mit Repo für `pacman -Syu`-Updates:
 
 ```bash
 bash install.sh --with-repo
 ```
+
+## Version frei wählen (5 Releases stehen bereit)
+
+Der Workflow `build-matrix` hält die letzten 5 wichtigen Upstream-Releases
+(neuestes Stable garantiert + neueste Betas) als Arch-Pakete vor:
+
+```bash
+bash install.sh --version=0.6.28           # finales Stable
+bash install.sh --version=0.6.29-beta.5    # bestimmte Beta
+```
+
+Alle Versionen liegen zusätzlich als `arch-v*`-Releases auf GitHub.
 
 ## Variante A: eigenes pacman-Repo
 
