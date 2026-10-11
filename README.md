@@ -24,9 +24,8 @@ norisk-pkg/                 LEGACY lokal, wird ignoriert, nicht pushen
 
 ## Noch zu tun vor `git push`
 
-1. In `install-repo.sh` + `docs/pacman-norisk.conf.example` echte
-   `https://<USER>.github.io/<REPO>` URL eintragen.
-2. Repo auf GitHub erstellen, pushen, unter Settings → Pages → Branch `gh-pages` aktivieren.
+1. Repo: https://github.com/BibberCode/nrc-arch ist live, Platzhalter ersetzt.
+2. Unter Settings → Pages → Branch `gh-pages` aktivieren (sobald angelegt).
 3. Workflow einmal per `workflow_dispatch` starten, Release + `x86_64/norisk.db` prüfen.
 4. Optional Phase 2: GPG-Signierung (`repo-add -s`, Secret `REPO_GPG_PRIVATE_KEY`).
 

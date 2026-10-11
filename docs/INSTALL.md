@@ -25,7 +25,7 @@ bash install.sh --with-repo
 Einmalig:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<GITHUB_USER>/<REPO>/main/install-repo.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BibberCode/nrc-arch/main/install-repo.sh | bash
 ```
 
 Das Skript:

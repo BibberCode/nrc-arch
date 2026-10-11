@@ -3,9 +3,9 @@
 # Idempotent, mit Backup von /etc/pacman.conf.
 set -euo pipefail
 
-# TODO: nach Repo-Erstellung ersetzen, z.B.:
-# REPO_URL="https://bjornl.github.io/nrc-arch/$arch"
-REPO_URL="${REPO_URL:-https://<GITHUB_USER>.github.io/<REPO>/$arch}"
+# Repo: https://github.com/BibberCode/nrc-arch
+# Pages: https://bibbercode.github.io/nrc-arch/$arch
+REPO_URL="${REPO_URL:-https://bibbercode.github.io/nrc-arch/$arch}"
 REPO_NAME="norisk"
 
 if ! command -v pacman >/dev/null 2>&1; then

@@ -1,11 +1,11 @@
 # Einmalig: Repo eintragen (Arch / CachyOS)
 
-URL im Workflow anpassen: `https://<GITHUB_USER>.github.io/<REPO>/$arch`
-nach dem ersten Push auf `gh-pages` ersetzen.
+Repo: https://github.com/BibberCode/nrc-arch
+Pages: https://bibbercode.github.io/nrc-arch/$arch
 
 ```ini
 [norisk]
-Server = https://<GITHUB_USER>.github.io/<REPO>/$arch
+Server = https://bibbercode.github.io/nrc-arch/$arch
 SigLevel = Never
 ```
 

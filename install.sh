@@ -9,9 +9,8 @@
 # Kein Flatpak, kein makepkg nötig.
 set -euo pipefail
 
-REPO="${REPO:-NoRiskClient/noriskclient-launcher}"
-# ^ Upstream für Fallback-Downloads. Für dein eigenes Release-Repo
-#   nach dem ersten Push ersetzen, z.B. REPO="DEINUSER/nrc-arch".
+REPO="${REPO:-BibberCode/nrc-arch}"
+# ^ Eigenes Release-Repo (enthält .pkg.tar.zst + install.sh).
 #   Alternativ per Env überschreiben: REPO=... bash install.sh
 
 PKG_GLOB="no-risk-launcher-*.pkg.tar.zst"
@@ -79,7 +78,7 @@ run sudo pacman -U --noconfirm "$PKG_FILE"
 
 # 3. Optional: Repo für pacman -Syu Updates.
 if [ "$WITH_REPO" = 1 ]; then
-  REPO_URL="${REPO_URL:-https://<GITHUB_USER>.github.io/<REPO>/$arch}"
+  REPO_URL="${REPO_URL:-https://bibbercode.github.io/nrc-arch/$arch}"
   if grep -q "^\[norisk\]" /etc/pacman.conf 2>/dev/null; then
     echo "[norisk] bereits eingerichtet."
   else
