@@ -1,0 +1,150 @@
+name: update-publish
+
+# Vollautomatisch ohne deinen PC:
+# 1. check: Upstream inkl. Betas prüfen (nur lesen)
+# 2. build-test: PKGBUILD aktualisieren + in Arch-Container bauen + testen
+# 3. publish: NUR bei grünem Build -> main aktualisieren, GitHub-Release,
+#    pacman-Repo auf gh-pages (repo-add). Rot -> kein Publish.
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      needs_update: ${{ steps.check.outputs.needs_update }}
+      upstreamver: ${{ steps.check.outputs.upstreamver }}
+      pkgver: ${{ steps.check.outputs.pkgver }}
+      sha256: ${{ steps.check.outputs.sha256 }}
+      tag: ${{ steps.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/check-upstream.py --check-only --token "$GITHUB_TOKEN" | tee /tmp/check.json
+          echo "needs_update=$(python3 -c "import json;print(str(json.load(open('/tmp/check.json'))['needs_update']).lower())")" >> "$GITHUB_OUTPUT"
+          echo "upstreamver=$(python3 -c "import json;print(json.load(open('/tmp/check.json'))['latest']['upstreamver'])")" >> "$GITHUB_OUTPUT"
+          echo "pkgver=$(python3 -c "import json;print(json.load(open('/tmp/check.json'))['latest']['pkgver'])")" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(python3 -c "import json;print(json.load(open('/tmp/check.json'))['latest']['sha256'])")" >> "$GITHUB_OUTPUT"
+          echo "tag=$(python3 -c "import json;print(json.load(open('/tmp/check.json'))['latest']['tag'])")" >> "$GITHUB_OUTPUT"
+
+  build-test:
+    needs: check
+    if: needs.check.outputs.needs_update == 'true'
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+    steps:
+      - uses: actions/checkout@v4
+      - name: PKGBUILD aktualisieren
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 scripts/check-upstream.py --apply --token "$GITHUB_TOKEN"
+      - name: Build-Deps
+        run: pacman -Syu --noconfirm --needed namcap desktop-file-utils
+      - name: .SRCINFO neu erzeugen
+        run: |
+          cd no-risk-launcher
+          makepkg --printsrcinfo > .SRCINFO
+          cat .SRCINFO
+      - name: Bauen als builder (makepkg nie als Root)
+        run: |
+          useradd -m builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          su builder -c "cd '$GITHUB_WORKSPACE/no-risk-launcher' && makepkg -s --noconfirm --noprogressbar"
+      - name: Tests (namcap, Desktop, WMClass, vercmp)
+        run: |
+          cd no-risk-launcher
+          pkg=$(echo no-risk-launcher-*.pkg.tar.zst)
+          namcap PKGBUILD
+          namcap "$pkg"
+          tmp=$(mktemp -d)
+          bsdtar -xf "$pkg" -C "$tmp"
+          grep -q '^StartupWMClass=noriskclient-launcher-v3$' "$tmp"/usr/share/applications/*.desktop
+          ! grep -q '^Categories=$' "$tmp"/usr/share/applications/*.desktop
+          desktop-file-validate "$tmp"/usr/share/applications/*.desktop
+          test -x "$tmp/usr/bin/noriskclient-launcher-v3"
+          # Beta/Stable-Ordnung: neue pkgver darf nicht älter als main sein
+          git fetch origin main --depth=1
+          old=$(git show origin/main:no-risk-launcher/PKGBUILD | grep -E '^pkgver=' | cut -d= -f2)
+          new=$(grep -E '^pkgver=' PKGBUILD | cut -d= -f2)
+          vercmp "$new" "$old" | grep -qv '^-1$' || (echo "vercmp: $new < $old, Abbruch" && exit 1)
+          rm -rf "$tmp"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pkg
+          path: no-risk-launcher/*.pkg.tar.zst
+          if-no-files-found: error
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pkgbuild
+          path: |
+            no-risk-launcher/PKGBUILD
+            no-risk-launcher/.SRCINFO
+          retention-days: 7
+
+  publish:
+    needs: [check, build-test]
+    if: success() && needs.check.outputs.needs_update == 'true'
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/download-artifact@v4
+        with:
+          name: pkg
+          path: /tmp/repo-pkgs
+      - uses: actions/download-artifact@v4
+        with:
+          name: pkgbuild
+          path: /tmp/repo-pkgbuild
+      - name: PKGBUILD-Update nach main pushen (nur nach grünem Build)
+        run: |
+          cp /tmp/repo-pkgbuild/PKGBUILD no-risk-launcher/PKGBUILD
+          cp /tmp/repo-pkgbuild/.SRCINFO no-risk-launcher/.SRCINFO
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add no-risk-launcher/PKGBUILD no-risk-launcher/.SRCINFO
+          git diff --cached --quiet || git commit -m "chore: ${{ needs.check.outputs.tag }} -> ${{ needs.check.outputs.pkgver }}"
+          git push origin main
+      - name: pacman-Repo bauen (repo-add) + gh-pages
+        run: |
+          pacman -Syu --noconfirm --needed git
+          mkdir -p /tmp/pacrepo/x86_64
+          cp /tmp/repo-pkgs/*.pkg.tar.zst /tmp/pacrepo/x86_64/
+          cd /tmp/pacrepo/x86_64
+          repo-add norisk.db.tar.zst *.pkg.tar.zst
+          # gh-pages Branch aktualisieren (ohne History umzuschreiben geht auch anders,
+          # für kleines Projekt: checkout + copy + push)
+          cd "$GITHUB_WORKSPACE"
+          git fetch origin gh-pages:gh-pages || true
+          git worktree add /tmp/ghpages gh-pages 2>/dev/null || (git checkout -b gh-pages && git worktree add /tmp/ghpages gh-pages)
+          mkdir -p /tmp/ghpages/x86_64
+          cp /tmp/pacrepo/x86_64/* /tmp/ghpages/x86_64/
+          cd /tmp/ghpages
+          git add x86_64
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "repo: ${{ needs.check.outputs.tag }}" || true
+          git push origin gh-pages
+      - name: GitHub-Release mit .pkg.tar.zst
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: arch-v${{ needs.check.outputs.pkgver }}-1
+          name: no-risk-launcher ${{ needs.check.outputs.pkgver }} (upstream ${{ needs.check.outputs.tag }})
+          body: |
+            Upstream: ${{ needs.check.outputs.tag }}
+            SHA256 (.deb): ${{ needs.check.outputs.sha256 }}
+            Install: siehe README / docs/INSTALL.md
+          files: /tmp/repo-pkgs/*.pkg.tar.zst

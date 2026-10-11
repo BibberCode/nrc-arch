@@ -1,0 +1,8 @@
+# Build-Artefakte, niemals committen
+*.deb
+*.pkg.tar.zst
+*.pkg.tar.zst.sig
+pkg/
+src/
+*.sig
+!NoRiskClient-Linux-*.deb.sig

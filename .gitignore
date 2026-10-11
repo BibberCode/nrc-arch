@@ -1,0 +1,12 @@
+# Legacy + Build-Artefakte
+norisk-pkg/
+*.deb
+*.pkg.tar.zst
+*.pkg.tar.zst.sig
+pkg/
+src/
+*.sig
+no-risk-launcher/*.deb
+no-risk-launcher/*.pkg.tar.zst
+
+__pycache__/

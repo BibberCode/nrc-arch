@@ -1,0 +1,64 @@
+name: build
+
+on:
+  push:
+    paths:
+      - "no-risk-launcher/**"
+      - ".github/workflows/build.yml"
+  pull_request:
+    paths:
+      - "no-risk-launcher/**"
+  workflow_dispatch:
+
+# Minimal: nur lesen. Kein Publish, kein Release.
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+    defaults:
+      run:
+        working-directory: no-risk-launcher
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build-Deps installieren
+        run: pacman -Syu --noconfirm --needed namcap desktop-file-utils
+
+      - name: .SRCINFO-Konsistenz prüfen
+        run: |
+          makepkg --printsrcinfo > /tmp/.SRCINFO.ci
+          diff -u .SRCINFO /tmp/.SRCINFO.ci
+
+      - name: Paket bauen (ohne Root, ohne Install)
+        run: |
+          useradd -m builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          su builder -c "cd '$PWD' && makepkg -s --noconfirm --noprogressbar"
+
+      - name: Basistests
+        run: |
+          pkg=$(echo no-risk-launcher-*.pkg.tar.zst)
+          test -f "$pkg"
+          namcap PKGBUILD
+          namcap "$pkg"
+          bsdtar -xOf "$pkg" .PKGINFO | grep -q "depend = webkit2gtk-4.1"
+          tmp=$(mktemp -d)
+          bsdtar -xf "$pkg" -C "$tmp" usr/share/applications/*.desktop
+          grep -q '^StartupWMClass=noriskclient-launcher-v3$' "$tmp"/usr/share/applications/*.desktop
+          ! grep -q '^Categories=$' "$tmp"/usr/share/applications/*.desktop
+          desktop-file-validate "$tmp"/usr/share/applications/*.desktop
+          rm -rf "$tmp"
+          # vercmp-Gate: neue pkgver muss >= alte sein, sonst Beta/Stable-Problem
+          echo "vercmp-Check läuft im Update-Workflow gegen Vorgängerversion"
+
+      - name: Paket als CI-Artefakt (kein Release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg
+          path: no-risk-launcher/*.pkg.tar.zst
+          if-no-files-found: error
+          retention-days: 7

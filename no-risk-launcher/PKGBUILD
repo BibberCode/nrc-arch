@@ -1,0 +1,39 @@
+# Maintainer: Dein Name <deine@mail.de>
+# Upstream: https://github.com/NoRiskClient/noriskclient-launcher
+# Binary-Repack: offizielles NoRiskClient-Linux.deb -> pacman-Paket
+# Kein Flatpak, kein Kompilieren, nur Entpacken + Desktop-Fix.
+
+pkgname=no-risk-launcher
+# Upstream-Tag mit Bindestrich (für URL), Arch-pkgver mit Unterstrich.
+_upstreamver=0.6.29-beta.6
+pkgver=0.6.29_beta.6
+pkgrel=1
+pkgdesc="NoRisk Client Launcher (binary repack)"
+arch=('x86_64')
+url="https://github.com/NoRiskClient/noriskclient-launcher"
+license=('GPL-3.0-only')
+depends=('gtk3' 'webkit2gtk-4.1')
+optdepends=('libayatana-appindicator: Tray-Icon-Unterstützung')
+options=('!strip')
+source=("NoRiskClient-Linux-${_upstreamver}.deb::https://github.com/NoRiskClient/noriskclient-launcher/releases/download/v${_upstreamver}/NoRiskClient-Linux.deb")
+# SHA256 aus GitHub-API digest verifiziert (v0.6.29-beta.6):
+sha256sums=('65f404b7cd046eb64b382d5c7f5d58cd8fd932e81d92a2079b311d90ab80ee54')
+
+package() {
+    bsdtar -xf "$srcdir/NoRiskClient-Linux-${_upstreamver}.deb" -C "$srcdir"
+    bsdtar -xf "$srcdir/data.tar.gz" -C "$pkgdir"
+
+    # KDE-Taskleisten-Fix: Fenster dem Starter zuordnen.
+    # Dateiname enthält ein Leerzeichen ("NoRisk Launcher.desktop"),
+    # daher Schleife mit Quoting.
+    for _desktop in "$pkgdir"/usr/share/applications/*.desktop; do
+        [ -e "$_desktop" ] || continue
+        if ! grep -q '^StartupWMClass=' "$_desktop"; then
+            printf '%s\n' 'StartupWMClass=noriskclient-launcher-v3' >> "$_desktop"
+        fi
+        # Upstream liefert Categories= leer aus, das mag desktop-file-validate nicht.
+        if grep -q '^Categories=$' "$_desktop"; then
+            sed -i 's/^Categories=$/Categories=Game;/' "$_desktop"
+        fi
+    done
+}

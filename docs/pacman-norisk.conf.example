@@ -1,0 +1,30 @@
+# Einmalig: Repo eintragen (Arch / CachyOS)
+
+URL im Workflow anpassen: `https://<GITHUB_USER>.github.io/<REPO>/$arch`
+nach dem ersten Push auf `gh-pages` ersetzen.
+
+```ini
+[norisk]
+Server = https://<GITHUB_USER>.github.io/<REPO>/$arch
+SigLevel = Never
+```
+
+Ans Ende von `/etc/pacman.conf` anhängen, dann:
+
+```bash
+sudo pacman -Syu
+sudo pacman -S no-risk-launcher
+```
+
+Danach kommen Updates automatisch mit:
+
+```bash
+sudo pacman -Syu
+```
+
+## Warum SigLevel Never (MVP)?
+
+Kleines Community-Projekt, kein Key-Management. Transport via HTTPS,
+Paketinhalt via SHA256-geprüfter Upstream-`.deb` im PKGBUILD.
+Signierung ist als Phase 2 vorgesehen (GPG-Key als Actions-Secret,
+`repo-add -s`, `SigLevel = Required`).
