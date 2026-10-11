@@ -116,27 +116,29 @@ jobs:
       - name: Fehlende arch-v*-Releases anlegen (bestehende überspringen)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           pacman -Syu --noconfirm --needed git github-cli
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE"
           for pkg in /tmp/mpks/no-risk-launcher-*.pkg.tar.zst; do
             base=$(basename "$pkg")
             pkgver=${base#no-risk-launcher-}
             pkgver=${pkgver%-1-x86_64.pkg.tar.zst}
             tag="arch-v${pkgver}-1"
-            has_pkg=$(gh release view "$tag" --json assets -q '[.assets[] | select(.name | endswith(".pkg.tar.zst"))] | length' 2>/dev/null || echo 0)
+            has_pkg=$(gh release view "$tag" -R "$GH_REPO" --json assets -q '[.assets[] | select(.name | endswith(".pkg.tar.zst"))] | length' 2>/dev/null || echo 0)
             if [ "$has_pkg" != "0" ]; then
               echo "Release $tag vollständig, überspringe"
               continue
             fi
-            if gh release view "$tag" >/dev/null 2>&1; then
+            if gh release view "$tag" -R "$GH_REPO" >/dev/null 2>&1; then
               echo "Release $tag unvollständig, lege neu an"
-              gh release delete "$tag" -y >/dev/null 2>&1 || true
-              git push origin ":refs/tags/$tag" 2>/dev/null || true
+              gh release delete "$tag" -R "$GH_REPO" -y >/dev/null 2>&1 || true
+              gh api "repos/${GH_REPO}/git/refs/tags/${tag}" -X DELETE >/dev/null 2>&1 || true
             else
               echo "Erstelle Release $tag"
             fi
-            gh release create "$tag" --title "no-risk-launcher ${pkgver}" \
+            gh release create "$tag" -R "$GH_REPO" --title "no-risk-launcher ${pkgver}" \
               --notes "Arch-Paket aus offiziellem Upstream-.deb (SHA256-geprüft). Install: install.sh aus diesem Release laden, dann bash install.sh. Versionen: --channel / --version in install.sh." \
               "$pkg" install.sh
           done
