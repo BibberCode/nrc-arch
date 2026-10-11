@@ -71,6 +71,7 @@ jobs:
           open(p, "w").write(t)
           EOF
           grep -E "^_upstreamver|^pkgver|^pkgrel|sha256sums" "$GITHUB_WORKSPACE/.matrix-build/pkg/PKGBUILD"
+          chown -R builder:builder "$GITHUB_WORKSPACE/.matrix-build" "$GITHUB_WORKSPACE/.matrix-out"
       - name: Bauen als builder
         run: su builder -c "cd '$GITHUB_WORKSPACE/.matrix-build/pkg' && makepkg -s --noconfirm --noprogressbar"
       - name: Tests (namcap, Desktop, WMClass)
