@@ -75,9 +75,10 @@ jobs:
           desktop-file-validate "$tmp"/usr/share/applications/*.desktop
           test -x "$tmp/usr/bin/noriskclient-launcher-v3"
           # Beta/Stable-Ordnung: neue pkgver darf nicht älter als main sein
-          git -C "$GITHUB_WORKSPACE" fetch origin main --depth=1
-          old=$(git -C "$GITHUB_WORKSPACE" show origin/main:no-risk-launcher/PKGBUILD | grep -E '^pkgver=' | cut -d= -f2)
-          new=$(grep -E '^pkgver=' "$GITHUB_WORKSPACE/no-risk-launcher/PKGBUILD" | cut -d= -f2)
+          repo_root=$(git rev-parse --show-toplevel)
+          git -C "$repo_root" fetch origin main:refs/remotes/origin/main --depth=1
+          old=$(git -C "$repo_root" show origin/main:no-risk-launcher/PKGBUILD | grep -E '^pkgver=' | cut -d= -f2)
+          new=$(grep -E '^pkgver=' PKGBUILD | cut -d= -f2)
           vercmp "$new" "$old" | grep -qv '^-1$' || (echo "vercmp: $new < $old, Abbruch" && exit 1)
           rm -rf "$tmp"
       - uses: actions/upload-artifact@v5
