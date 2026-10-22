@@ -76,12 +76,27 @@ jobs:
           ! grep -q '^Categories=$' "$tmp"/usr/share/applications/*.desktop
           desktop-file-validate "$tmp"/usr/share/applications/*.desktop
           test -x "$tmp/usr/bin/noriskclient-launcher-v3"
-          # Beta/Stable-Ordnung: neue pkgver darf nicht älter als main sein
+          # Beta/Stable-Ordnung: neue pkgver darf nicht älter als main sein.
+          # Achtung: vercmp sortiert 0.6.29_beta.6 > 0.6.29 (Unterstrich schlägt Ende),
+          # darum Basisversion und Beta-Nummer getrennt vergleichen.
           repo_root=$(git rev-parse --show-toplevel)
           git -C "$repo_root" fetch origin main:refs/remotes/origin/main --depth=1
           old=$(git -C "$repo_root" show origin/main:no-risk-launcher/PKGBUILD | grep -E '^pkgver=' | cut -d= -f2)
           new=$(grep -E '^pkgver=' PKGBUILD | cut -d= -f2)
-          vercmp "$new" "$old" | grep -qv '^-1$' || (echo "vercmp: $new < $old, Abbruch" && exit 1)
+          base_old=${old%%_beta*}; beta_old=0
+          case "$old" in *_beta*) beta_old=${old##*_beta.};; esac
+          base_new=${new%%_beta*}; beta_new=0
+          case "$new" in *_beta*) beta_new=${new##*_beta.};; esac
+          cmp=$(vercmp "$base_new" "$base_old")
+          if [ "$cmp" -lt 0 ]; then
+            echo "vercmp: $new < $old, Abbruch"; exit 1
+          fi
+          if [ "$cmp" -eq 0 ] && [ "$beta_new" -ne 0 ]; then
+            if [ "$beta_old" -eq 0 ] || [ "$beta_new" -lt "$beta_old" ]; then
+              echo "vercmp: $new < $old, Abbruch"; exit 1
+            fi
+          fi
+          echo "vercmp ok: $new >= $old"
           rm -rf "$tmp"
       - uses: actions/upload-artifact@v5
         with:
