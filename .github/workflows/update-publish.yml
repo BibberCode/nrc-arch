@@ -42,6 +42,8 @@ jobs:
     container:
       image: archlinux:base-devel
     steps:
+      - name: git vor Checkout installieren (sonst legt checkout kein .git an)
+        run: pacman -Syu --noconfirm --needed git
       - uses: actions/checkout@v5
       - name: PKGBUILD aktualisieren
         env:
@@ -104,6 +106,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: git vor Checkout installieren (sonst legt checkout kein .git an)
+        run: pacman -Syu --noconfirm --needed git
       - uses: actions/checkout@v5
         with:
           ref: main

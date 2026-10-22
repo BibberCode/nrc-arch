@@ -41,6 +41,8 @@ jobs:
     container:
       image: archlinux:base-devel
     steps:
+      - name: git vor Checkout installieren (sonst legt checkout kein .git an)
+        run: pacman -Syu --noconfirm --needed git
       - uses: actions/checkout@v5
       - name: Build-Deps
         run: pacman -Syu --noconfirm --needed namcap desktop-file-utils sudo git
@@ -105,6 +107,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: git vor Checkout installieren (sonst legt checkout kein .git an)
+        run: pacman -Syu --noconfirm --needed git
       - uses: actions/checkout@v5
         with:
           ref: main
