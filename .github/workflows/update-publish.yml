@@ -136,15 +136,29 @@ jobs:
         with:
           name: pkgbuild
           path: /tmp/repo-pkgbuild
-      - name: PKGBUILD-Update nach main pushen (nur nach grünem Build)
+      - name: PKGBUILD-Update nach main pushen (frischer Clone, kein Checkout-Git nötig)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.check.outputs.tag }}
+          PKGVER: ${{ needs.check.outputs.pkgver }}
         run: |
+          pacman -Syu --noconfirm --needed git
+          git config --global --add safe.directory '*'
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf /tmp/mainrepo
+          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}.git" /tmp/mainrepo
+          cd /tmp/mainrepo
           cp /tmp/repo-pkgbuild/PKGBUILD no-risk-launcher/PKGBUILD
           cp /tmp/repo-pkgbuild/.SRCINFO no-risk-launcher/.SRCINFO
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add no-risk-launcher/PKGBUILD no-risk-launcher/.SRCINFO
-          git diff --cached --quiet || git commit -m "chore: ${{ needs.check.outputs.tag }} -> ${{ needs.check.outputs.pkgver }}"
-          git push origin main
+          if git diff --cached --quiet; then
+            echo "PKGBUILD auf main bereits aktuell"
+          else
+            git commit -m "chore: ${TAG} -> ${PKGVER}"
+            git push origin main
+          fi
       - name: pacman-Repo bauen (repo-add) + gh-pages (frischer Clone)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
