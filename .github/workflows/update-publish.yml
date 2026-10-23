@@ -110,6 +110,8 @@ jobs:
           path: |
             no-risk-launcher/PKGBUILD
             no-risk-launcher/.SRCINFO
+          if-no-files-found: error
+          include-hidden-files: true
           retention-days: 7
 
   publish:
