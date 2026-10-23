@@ -1,6 +1,6 @@
 pkgbase = no-risk-launcher
 	pkgdesc = NoRisk Client Launcher (binary repack)
-	pkgver = 0.6.29_beta.6
+	pkgver = 0.6.30_beta.1
 	pkgrel = 1
 	url = https://github.com/NoRiskClient/noriskclient-launcher
 	arch = x86_64
@@ -9,7 +9,7 @@ pkgbase = no-risk-launcher
 	depends = webkit2gtk-4.1
 	optdepends = libayatana-appindicator: Tray-Icon-Unterstützung
 	options = !strip
-	source = NoRiskClient-Linux-0.6.29-beta.6.deb::https://github.com/NoRiskClient/noriskclient-launcher/releases/download/v0.6.29-beta.6/NoRiskClient-Linux.deb
-	sha256sums = 65f404b7cd046eb64b382d5c7f5d58cd8fd932e81d92a2079b311d90ab80ee54
+	source = NoRiskClient-Linux-0.6.30-beta.1.deb::https://github.com/NoRiskClient/noriskclient-launcher/releases/download/v0.6.30-beta.1/NoRiskClient-Linux.deb
+	sha256sums = a6acf8c114da7b924e5b13937438d07c2743e7ec98a48c2a7c110baf5f5216a3
 
 pkgname = no-risk-launcher
