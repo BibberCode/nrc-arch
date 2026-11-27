@@ -5,8 +5,8 @@
 
 pkgname=no-risk-launcher
 # Upstream-Tag mit Bindestrich (für URL), Arch-pkgver mit Unterstrich.
-_upstreamver=0.6.32-beta.9
-pkgver=0.6.32_beta.9
+_upstreamver=0.6.32-beta.10
+pkgver=0.6.32_beta.10
 pkgrel=1
 pkgdesc="NoRisk Client Launcher (binary repack)"
 arch=('x86_64')
@@ -17,7 +17,7 @@ optdepends=('libayatana-appindicator: Tray-Icon-Unterstützung')
 options=('!strip')
 source=("NoRiskClient-Linux-${_upstreamver}.deb::https://github.com/NoRiskClient/noriskclient-launcher/releases/download/v${_upstreamver}/NoRiskClient-Linux.deb")
 # SHA256 aus GitHub-API digest verifiziert (v0.6.29-beta.6):
-sha256sums=('da03bec9350ce981f6cc4912064aff9dd819d09b51f817640b06e1211bbbf5f9')
+sha256sums=('b423b47ab0df6ff222272a282f5bf9d73c76051a20906528d2f41509fcbebace')
 
 package() {
     bsdtar -xf "$srcdir/NoRiskClient-Linux-${_upstreamver}.deb" -C "$srcdir"
